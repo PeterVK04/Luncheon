@@ -16,7 +16,7 @@ class LuncheonApp extends StatelessWidget {
         '/': (context) => const WelcomePage(),
         '/create-account': (context) => const CreateAccountPage(),
         '/login': (context) => const LoginPage(),
-        '/home': (context) => const HomePage(),       // <-- new
+        '/home': (context) => const HomePage(),
       },
     );
   }
@@ -62,16 +62,11 @@ class WelcomePage extends StatelessWidget {
   }
 }
 
-class CreateAccountPage extends StatelessWidget {
+class CreateAccountPage extends StatefulWidget {
   const CreateAccountPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Create Account')),
-      body: const Center(child: Text('Create Account Screen')),
-    );
-  }
+  State<CreateAccountPage> createState() => _CreateAccountPageState();
 }
 
 class LoginPage extends StatefulWidget {
@@ -145,6 +140,73 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
       body: const Center(child: Text('Home', style: TextStyle(fontSize: 32))),
+    );
+  }
+}
+
+
+
+class _CreateAccountPageState extends State<CreateAccountPage> {
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _agreed = false;
+
+  bool get _canSubmit =>
+      _usernameController.text.isNotEmpty &&
+      _passwordController.text.isNotEmpty &&
+      _agreed;
+
+  void _handleCreateAccount() {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+
+    //replace with Firebase Auth createUserWithEmailAndPassword
+    //using username & password
+    
+    Navigator.pushReplacementNamed(context, '/');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Create Account')),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextField(
+              controller: _usernameController,
+              decoration: const InputDecoration(labelText: 'Username'),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _passwordController,
+              decoration: const InputDecoration(labelText: 'Password'),
+              obscureText: true,
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Checkbox(
+                  value: _agreed,
+                  onChanged: (val) => setState(() => _agreed = val ?? false),
+                ),
+                const Expanded(
+                  child: Text('I agree to Luncheon’s terms and conditions'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _canSubmit ? _handleCreateAccount : null,
+              child: const Text('Create Account'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
