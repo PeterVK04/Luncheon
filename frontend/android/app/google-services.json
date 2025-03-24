@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1045149857364",
+    "project_id": "luncheon-7278b",
+    "storage_bucket": "luncheon-7278b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1045149857364:android:859338ba577f9af1fcdfc1",
+        "android_client_info": {
+          "package_name": "com.example.frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGy5RVc2e7VzBQw7D-lhJZUsj7mupvkHE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

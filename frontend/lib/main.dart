@@ -1,6 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const LuncheonApp());
 }
 
@@ -25,7 +32,7 @@ class LuncheonApp extends StatelessWidget {
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
-  @override
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,26 +87,30 @@ class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  void _handleLogin() {
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text;
+   void _handleLogin() async {
+  final email = _usernameController.text.trim();
+  final password = _passwordController.text;
 
-    // TODO: Replace this hardcoded check with Firebase Auth call
-    if (username == 'Bob' && password == 'Gators!') {
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Login Failed'),
-          content: const Text('Invalid username or password.'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Try Again')),
-          ],
-        ),
-      );
-    }
+  try {
+    await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    Navigator.pushReplacementNamed(context, '/home');
+  } catch (e) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Login Failed'),
+        content: Text('Error: ${e.toString()}'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Try Again')),
+        ],
+      ),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -156,14 +167,31 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       _passwordController.text.isNotEmpty &&
       _agreed;
 
-  void _handleCreateAccount() {
+  void _handleCreateAccount() async {
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
 
-    //replace with Firebase Auth createUserWithEmailAndPassword
-    //using username & password
+    try {
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: username,
+        password: password,
+      );
+      Navigator.pushReplacementNamed(context, '/home');
+
+    }
     
-    Navigator.pushReplacementNamed(context, '/');
+    catch (e) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Create Account Failed'),
+          content: Text('Error: ${e.toString()}'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Try Again')),
+          ],
+        ),
+      );
+    }
   }
 
   @override
