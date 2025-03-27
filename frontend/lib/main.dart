@@ -5,6 +5,7 @@ import 'pages/welcome_page.dart';
 import 'pages/login_page.dart';
 import 'pages/create_account_page.dart';
 import 'pages/home_page.dart';
+import 'pages/profile_creation_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,7 +16,7 @@ void main() async {
 }
 
 class LuncheonApp extends StatelessWidget {
-  const LuncheonApp({Key? key}) : super(key: key);
+  const LuncheonApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +28,7 @@ class LuncheonApp extends StatelessWidget {
         '/create-account': (context) => const CreateAccountPage(),
         '/login': (context) => const LoginPage(),
         '/home': (context) => const HomePage(),
+        '/profile-creation': (context) => const ProfileCreationPage(),
       },
     );
   }

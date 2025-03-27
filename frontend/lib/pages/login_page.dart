@@ -1,8 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -21,7 +22,20 @@ class _LoginPageState extends State<LoginPage> {
         email: email,
         password: password,
       );
-      Navigator.pushReplacementNamed(context, '/home');
+
+      final user = FirebaseAuth.instance.currentUser;
+      final profileSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .get();
+
+      if (!profileSnapshot.exists) {
+        //if profile doesn't exist, navigate to profile creation
+        Navigator.pushReplacementNamed(context, '/profile-creation');
+      } else {
+        //if profile exists, navigate to home page
+        Navigator.pushReplacementNamed(context, '/home');
+      }
     } catch (e) {
       showDialog(
         context: context,
@@ -35,6 +49,7 @@ class _LoginPageState extends State<LoginPage> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class CreateAccountPage extends StatefulWidget {
-  const CreateAccountPage({Key? key}) : super(key: key);
+  const CreateAccountPage({super.key});
 
   @override
   State<CreateAccountPage> createState() => _CreateAccountPageState();
@@ -18,29 +18,30 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       _passwordController.text.isNotEmpty &&
       _agreed;
 
-  void _handleCreateAccount() async {
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text;
+void _handleCreateAccount() async {
+  final username = _usernameController.text.trim();
+  final password = _passwordController.text;
 
-    try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: username,
-        password: password,
-      );
-      Navigator.pushReplacementNamed(context, '/home');
-    } catch (e) {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Create Account Failed'),
-          content: Text('Error: ${e.toString()}'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Try Again')),
-          ],
-        ),
-      );
-    }
+  try {
+    await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: username,
+      password: password,
+    );
+    // After account creation, navigate to the profile creation page
+    Navigator.pushReplacementNamed(context, '/profile-creation');
+  } catch (e) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Create Account Failed'),
+        content: Text('Error: ${e.toString()}'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Try Again')),
+        ],
+      ),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
