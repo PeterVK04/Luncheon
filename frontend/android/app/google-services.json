@@ -4,6 +4,7 @@
     "project_id": "luncheon-7278b",
     "storage_bucket": "luncheon-7278b.firebasestorage.app"
   },
+  
   "client": [
     {
       "client_info": {
