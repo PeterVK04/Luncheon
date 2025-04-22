@@ -11,6 +11,9 @@ import 'pages/friendship_matching_page.dart';
 import 'pages/professional_matching_page.dart';
 import 'pages/travel_matching_page.dart';
 import 'pages/dating_matching_page.dart';
+import 'pages/messaging_page.dart'; 
+import 'pages/conversations_list_page.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,6 +56,11 @@ class LuncheonApp extends StatelessWidget {
         '/professional-matching': (ctx) => const ProfessionalMatchingPage(),
         '/travel-matching': (ctx) => const TravelMatchingPage(),
         '/dating-matching': (ctx) => const DatingMatchingPage(),
+        '/conversations': (ctx) => const ConversationsListPage(),
+        '/chat':          (ctx) {
+          final otherUid = ModalRoute.of(ctx)!.settings.arguments as String;
+          return MessagingPage(otherUid: otherUid);
+        },
       },
     );
   }

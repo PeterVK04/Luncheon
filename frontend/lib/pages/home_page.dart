@@ -86,7 +86,9 @@ class HomePage extends StatelessWidget {
             child: SizedBox(
               width: messagingButtonWidth,
               child: ElevatedButton(
-                onPressed: () => Navigator.pushNamed(context, '/messaging'),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/conversations');
+                },
                 child: const Text('Messaging'),
               ),
             ),

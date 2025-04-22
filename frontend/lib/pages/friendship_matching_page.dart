@@ -31,6 +31,7 @@ class _FriendshipPageState extends State<FriendshipMatchingPage> {
       setState(() => _currentData = null);
       return;
     }
+    
     final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     setState(() {
       _currentUid  = uid;

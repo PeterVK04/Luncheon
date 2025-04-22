@@ -3,9 +3,11 @@ import 'dart:collection';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '/services/blocking_service.dart';
 
 class FriendshipMatchingService {
   final _db = FirebaseFirestore.instance;
+  final _auth = FirebaseAuth.instance;
   final _queue = Queue<String>();
 
   double _toRadians(double deg) => deg * pi / 180;
@@ -24,32 +26,58 @@ class FriendshipMatchingService {
     return earthRadiusMiles * c;
   }
 
-  /// Build the queue of candidate UIDs
+  /// Build the queue of candidate UIDs, excluding already matched or pending
   Future<void> buildQueue() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      throw Exception('No authenticated user');
-    }
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('No authenticated user');
+    final meUid = user.uid;
 
-    final meDoc = await _db.collection('users').doc(user.uid).get();
-    if (!meDoc.exists) {
-      throw Exception('Current user profile not found');
-    }
-    final me = meDoc.data()!;
-    final myLat = (me['location'] as Map)['lat'] as double;
-    final myLng = (me['location'] as Map)['lng'] as double;
-    final myBirthday = DateTime.parse(me['birthday'] as String);
+    final me = FirebaseAuth.instance.currentUser!;
+    final blockerSvc = BlockingService();
+    final blocked   = await blockerSvc.getBlockedUsers();
+    final blockedBy = await blockerSvc.getBlockedByUsers();
+    
+    final meDoc = await _db.collection('users').doc(me.uid).get();
+    final data = meDoc.data()!;
+    final myLat = data['location']['lat'] as double;
+    final myLng = data['location']['lng'] as double;
+    final myBirthday = DateTime.parse(data['birthday'] as String);
     final myAge = DateTime.now().year - myBirthday.year;
+    final exclude = <String>{ meUid, ...blocked, ...blockedBy };
 
-    // Approximate bounding box for 30 miles in latitude
+    // Already matched users
+    final matchesSnap = await _db
+        .collection('users')
+        .doc(meUid)
+        .collection('matches')
+        .get();
+    for (var doc in matchesSnap.docs) {
+      exclude.add(doc.id);
+    }
+
+    // Pending outgoing friend requests
+    final pendingSnap = await _db
+        .collection('friendships')
+        .where('initiator', isEqualTo: meUid)
+        .where('status', isEqualTo: 'pending')
+        .get();
+    for (var doc in pendingSnap.docs) {
+      final users = List<String>.from(doc.data()['users'] as List);
+      // find the other user's ID
+      final other = users.firstWhere((id) => id != meUid);
+      exclude.add(other);
+    }
+
+
+    // approximate bounding box for 30 miles in latitude degrees
     final latDelta = 30.0 / 69.0;
     final minLat = myLat - latDelta;
     final maxLat = myLat + latDelta;
 
-    // Clear previous queue
+
     _queue.clear();
 
-    // Query candidates by latitude band
+    // Query by latitude band
     final snap = await _db
         .collection('users')
         .where('location.lat', isGreaterThan: minLat)
@@ -57,31 +85,67 @@ class FriendshipMatchingService {
         .get();
 
     for (var doc in snap.docs) {
-      if (doc.id == user.uid) continue;
+      final candidateUid = doc.id;
+      //print('meUid = $meUid');
+      //print('exclude = $exclude');
+      //print('Checking doc.id=$meUid → exclude.contains=${exclude.contains(meUid)}');
+      if (exclude.contains(candidateUid)) continue;
       final data = doc.data();
       final lat = (data['location'] as Map)['lat'] as double;
       final lng = (data['location'] as Map)['lng'] as double;
-      final distance = _distanceMiles(myLat, myLng, lat, lng);
-      if (distance > 30) continue;
+      if (_distanceMiles(myLat, myLng, lat, lng) > 30) continue;
 
       final birth = DateTime.parse(data['birthday'] as String);
       final age = DateTime.now().year - birth.year;
       if ((age - myAge).abs() > 5) continue;
 
-      _queue.add(doc.id);
+      _queue.add(candidateUid);
+      print('Added candidate: $candidateUid, age: $age, location: ($lat, $lng)');
     }
   }
 
   /// Returns the next candidate UID, or null if none left
   String? next() => _queue.isEmpty ? null : _queue.first;
 
-  /// Accept a candidate: remove and record acceptance
+  /// Accept a candidate: record a friend request or confirm a match
   Future<void> accept(String candidateUid) async {
+    final meUid = _auth.currentUser!.uid;
+    final users = [meUid, candidateUid]..sort();
+    final friendshipId = '${users[0]}_${users[1]}';
+    final ref = _db.collection('friendships').doc(friendshipId);
+    final doc = await ref.get();
+
+    if (!doc.exists) {
+      // First acceptance: create a pending request
+      await ref.set({
+        'initiator': meUid,
+        'status': 'pending',
+        'users': users,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } else {
+      final data = doc.data()!;
+      if (data['status'] == 'pending' && data['initiator'] != meUid) {
+        // Mutual acceptance: mark matched and add to each user's matches
+        final batch = _db.batch();
+        batch.update(ref, {
+          'status': 'matched',
+          'matchedAt': FieldValue.serverTimestamp(),
+        });
+        // Add to each user's matches subcollection
+        final meMatch = _db.collection('users').doc(meUid).collection('matches').doc(candidateUid);
+        batch.set(meMatch, {'matchedAt': FieldValue.serverTimestamp()});
+        final otherMatch = _db.collection('users').doc(candidateUid).collection('matches').doc(meUid);
+        batch.set(otherMatch, {'matchedAt': FieldValue.serverTimestamp()});
+        await batch.commit();
+      }
+    }
+
+    // Remove from queue in all cases
     _queue.remove(candidateUid);
-    // TODO: Write acceptance record, e.g. in Firestore
   }
 
-  /// Reject a candidate: simply remove
+  /// Reject a candidate: simply remove from queue
   void reject(String candidateUid) {
     _queue.remove(candidateUid);
   }
