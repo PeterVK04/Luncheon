@@ -41,6 +41,11 @@ dependencies:
   crop_your_image: ^2.0.0
   firebase_storage: ^12.4.4
   geolocator: ^9.0.2
+  google_sign_in: ^5.0.0
+  http: ^0.13.0
+  googleapis: ^10.0.0
+  device_calendar: ^4.3.3
+
 
 dev_dependencies:
   flutter_test:

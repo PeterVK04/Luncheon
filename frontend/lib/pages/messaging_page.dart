@@ -2,7 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/blocking_service.dart';  // ← import your BlockingService
+import '/services/blocking_service.dart';  // ← import your BlockingService
+import '/pages/suggest_lunch.dart';  // <-- make sure this path matches your file
 
 class MessagingPage extends StatefulWidget {
   final String otherUid;
@@ -85,6 +86,19 @@ class _MessagingPageState extends State<MessagingPage> {
       appBar: AppBar(
         title: const Text('Chat'),
         actions: [
+          // 1) Lunch suggestion button
+          IconButton(
+            icon: const Icon(Icons.lunch_dining),
+            tooltip: 'Suggest Lunch',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => LunchSuggestion(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.block),
             tooltip: 'Block User',
