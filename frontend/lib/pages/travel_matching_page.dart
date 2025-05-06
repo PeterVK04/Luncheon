@@ -81,7 +81,7 @@ class _TravelMatchingPageState extends State<TravelMatchingPage> {
                       final birth = DateTime.parse(birthdayStr);
                       final age = DateTime.now().year - birth.year;
                       return Text(
-                        'Age: \$age',
+                        'Age: $age',
                         style: const TextStyle(fontSize: 18),
                       );
                     },
